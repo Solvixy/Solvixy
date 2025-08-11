@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Question Solver</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /*
+         * UI Design Principles:
+         * - Clean and modern design for an intuitive user experience.
+         * - Consistent color palette across two dark modes using CSS variables.
+         * - Fully responsive layout using Flexbox for adaptability.
+         * - Clear visual hierarchy and interactive feedback (loading spinner, button states).
+         * - Custom scrollbar for better aesthetics.
+         * - Splash screen to provide a clean and branded entry point.
+         */
+
+        :root {
+            /* Dark Mode (Default) Colors */
+            --body-bg: #171D27;
+            --container-bg: #212936;
+            --header-bg: #171D27;
+            --header-title-color: #0CCDA3;
+            --header-subtitle-color: #E2E8F0;
+            --label-color: #94A3B8;
+            --text-color: #E2E8F0;
+            --placeholder-color: #A0AEC0;
+            --input-bg: #2D3748;
+            --input-border: #718096;
+            --answer-bg: #2D3748;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --header-shadow: none; /* No shadow in dark mode */
+            --input-shadow: none; /* No shadow in dark mode */
+            --answer-shadow: none; /* No shadow in dark mode */
+            --button-bg-transparent: transparent;
+            --button-text-transparent: #E2E8F0;
+            --button-border-transparent: #718096;
+            --button-hover-bg-transparent: rgba(113, 128, 150, 0.2);
+            --ad-bg: #374151; /* Background for ad placeholder */
+            --ad-text: #E5E7EB; /* Text color for ad placeholder */
+            --ad-border: #4B5563; /* Border color for ad placeholder */
+        }
+
+        body.light {
+            /* Alternate Dark Mode Colors */
+            --body-bg: #212936;
+            --container-bg: #171D27;
+            --header-bg: #0CCDA3;
+            --header-title-color: #171D27;
+            --header-subtitle-color: #171D27;
+            --label-color: #E2E8F0;
+            --text-color: #E2E8F0;
+            --placeholder-color: #A0AEC0;
+            --input-bg: #2D3748;
+            --input-border: #718096;
+            --answer-bg: #2D3748;
+            --shadow-color: rgba(0, 0, 0, 0.05); /* Lighter shadow for the main container */
+            --header-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1-px rgba(0, 0, 0, 0.06); /* Shadow for header */
+            --input-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); /* Shadow for inputs */
+            --answer-shadow: 0 4px 6px -1-px rgba(0, 0, 0, 0.1), 0 2px 4px -1-px rgba(0, 0, 0, 0.06); /* Shadow for answer box */
+            --button-bg-transparent: transparent;
+            --button-text-transparent: #E2E8F0;
+            --button-border-transparent: #718096;
+            --button-hover-bg-transparent: rgba(113, 128, 150, 0.2);
+            --ad-bg: #f3f4f6; /* Background for ad placeholder */
+            --ad-text: #4b5563; /* Text color for ad placeholder */
+            --ad-border: #e5e7eb; /* Border color for ad placeholder */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--body-bg);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            background-color: var(--container-bg);
+            box-shadow: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -2px var(--shadow-color);
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        .header {
+            background-color: var(--header-bg);
+            box-shadow: var(--header-shadow); /* Apply new shadow variable */
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        .header-title {
+            color: var(--header-title-color);
+            transition: color 0.3s;
+        }
+
+        .header-subtitle {
+            color: var(--header-subtitle-color);
+            transition: color 0.3s;
+        }
+
+        /* Styling for the labels */
+        .form-label {
+            color: var(--label-color);
+            transition: color 0.3s;
+        }
+        
+        .input-field {
+            background-color: var(--input-bg);
+            border-color: var(--input-border);
+            color: var(--text-color);
+            box-shadow: var(--input-shadow); /* Apply new shadow variable */
+            transition: background-color 0.3s, border-color 0.3s, color 0.3s, box-shadow 0.3s;
+        }
+
+        .input-field::placeholder {
+            color: var(--placeholder-color);
+        }
+
+        .answer-output {
+            background-color: var(--answer-bg);
+            color: var(--text-color);
+            box-shadow: var(--answer-shadow); /* Apply new shadow variable */
+            transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+        }
+
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--container-bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4a5568;
+            border-radius: 4px;
+        }
+        body.light ::-webkit-scrollbar-track {
+            background: var(--body-bg);
+        }
+        body.light ::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+        }
+        
+        /* Subtle text shadow for the header in light mode */
+        body.light .header-title {
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        body.light .header-subtitle {
+            text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Styles for the transparent button */
+        .transparent-btn {
+            background-color: var(--button-bg-transparent);
+            color: var(--button-text-transparent);
+            border: 1px solid var(--button-border-transparent);
+        }
+        .transparent-btn:hover {
+            background-color: var(--button-hover-bg-transparent);
+        }
+
+        /* Subtle glow effect for buttons on hover */
+        .glow-blue-hover:hover { box-shadow: 0 0 8px rgba(59, 130, 246, 0.5); transition: box-shadow 0.3s ease-in-out; }
+        .glow-red-hover:hover { box-shadow: 0 0 8px rgba(239, 68, 68, 0.5); transition: box-shadow 0.3s ease-in-out; }
+        .glow-green-hover:hover { box-shadow: 0 0 8px rgba(34, 197, 94, 0.5); transition: box-shadow 0.3s ease-in-out; }
+        .glow-purple-hover:hover { box-shadow: 0 0 8px rgba(168, 85, 247, 0.5); transition: box-shadow 0.3s ease-in-out; }
+        .glow-gray-hover:hover { box-shadow: 0 0 8px rgba(107, 114, 128, 0.5); transition: box-shadow 0.3s ease-in-out; }
+
+        /* Styles for the ad placeholder */
+        .ad-placeholder {
+            background-color: var(--ad-bg);
+            color: var(--ad-text);
+            border: 1px dashed var(--ad-border);
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        /* Switch button styles */
+        .theme-toggle-switch {
+            width: 60px;
+            height: 32px;
+            background-color: #4a5568;
+            border-radius: 16px;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        body.light .theme-toggle-switch {
+            background-color: #0CCDA3;
+        }
+
+        .theme-toggle-switch-thumb {
+            width: 28px;
+            height: 28px;
+            background-color: #E2E8F0;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        body.light .theme-toggle-switch-thumb {
+            transform: translateX(28px);
+        }
+
+        .theme-toggle-switch-icon {
+            font-size: 1rem;
+            line-height: 1;
+            transition: opacity 0.3s;
+            position: absolute;
+        }
+        
+        .moon-icon {
+            opacity: 1;
+        }
+        
+        .sun-icon {
+            opacity: 0;
+        }
+
+        body.light .moon-icon {
+            opacity: 0;
+        }
+        
+        body.light .sun-icon {
+            opacity: 1;
+        }
+
+        /* Splash Screen styles */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            display: flex;
+            flex-direction: column; /* Changed to column to stack text vertically */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 1;
+            transition: opacity 0.5s ease-out;
+        }
+
+        #splash-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .splash-title {
+            color: #0CCDA3;
+            font-size: 3rem;
+            font-weight: bold;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .splash-subtitle {
+            color: #E2E8F0;
+            font-size: 1.25rem;
+            margin-top: 0.5rem;
+            animation: fadeIn 1s ease-in-out 0.2s forwards; /* Add a slight delay */
+            opacity: 0; /* Start with opacity 0 to use the animation */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+    
+    <!-- 
+        *** ADMOB SCRIPT PLACEHOLDER ***
+        When you deploy this app to your own live website, you would place the
+        Google AdMob/AdSense script tag here in the <head> section.
+        Your App ID: ca-app-pub-3323385698713093~6791858142
+        
+        Example:
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-app-pub-3323385698713093" crossorigin="anonymous"></script>
+    -->
+</head>
+<body class="min-h-screen flex flex-col items-center p-4">
+
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <h1 class="splash-title">Solvixy</h1>
+        <p class="splash-subtitle">Multi-Subject Problem Solver</p>
+    </div>
+
+    <!-- Header Section -->
+    <header class="header w-full max-w-4xl flex flex-col justify-center items-center py-4 px-6 mb-6 rounded-xl transition duration-300 relative">
+        <div class="flex flex-col items-center text-center">
+            <h1 class="header-title text-4xl font-bold">Solvixy</h1>
+            <p class="header-subtitle text-lg mt-1">Multi-Subject Problem Solver</p>
+        </div>
+        <!-- Theme Toggle Switch -->
+        <div id="theme-toggle" class="theme-toggle-switch absolute top-4 right-4 sm:top-auto sm:left-auto sm:right-4 sm:mt-0">
+            <div class="theme-toggle-switch-thumb">
+                <span id="moon-icon" class="theme-toggle-switch-icon moon-icon">🌙</span>
+                <span id="sun-icon" class="theme-toggle-switch-icon sun-icon">☀️</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="w-full max-w-4xl flex-grow flex flex-col items-center">
+        <!-- Main container for the form and answer -->
+        <div class="container w-full p-8 rounded-xl transition duration-300">
+            <h2 class="text-2xl font-bold text-center mb-6">Powerful Multi-Subject Problem Solver</h2>
+            
+            <!-- Top Ad Placeholder Section -->
+            <div class="ad-placeholder text-center py-4 rounded-lg mb-6">
+                <p>Advertisement - Top Ad</p>
+                <!-- 
+                    *** ADMOB AD UNIT PLACEHOLDER ***
+                    This is where you would place the ad unit code.
+                    Your Ad Unit ID: ca-app-pub-3323385698713093/2117313631
+                    
+                    When you deploy this app, you would replace this div with a block like this:
+                    <ins class="adsbygoogle"
+                        style="display:block"
+                        data-ad-client="ca-app-pub-3323385698713093"
+                        data-ad-slot="2117313631"
+                        data-ad-format="auto"
+                        data-full-width-responsive="true"></ins>
+                    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+                -->
+            </div>
+            
+            <div class="space-y-4">
+                <!-- Subject, Language, and Voice Selection Dropdowns -->
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="flex-1">
+                        <label for="subject-select" class="form-label block text-sm font-medium mb-1">Select Subject:</label>
+                        <select id="subject-select" class="input-field w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#0CCDA3] transition duration-300">
+                            <option value="General">🌐 General Knowledge</option>
+                            <option value="Mathematics">🔢 Mathematics</option>
+                            <option value="Physics">⚛️ Physics</option>
+                            <option value="Chemistry">🧪 Chemistry</option>
+                            <option value="Biology">🧬 Biology</option>
+                            <option value="History">📜 History</option>
+                            <option value="Geography">🗺️ Geography</option>
+                            <option value="Literature">📚 Literature</option>
+                            <option value="English Language">🔤 English Language</option>
+                            <option value="Computer Science">💻 Computer Science</option>
+                            <option value="Engineering">⚙️ Engineering</option>
+                            <option value="Social Studies">👥 Social Studies</option>
+                            <option value="Economics">📈 Economics</option>
+                            <option value="Political Science">🏛️ Political Science</option>
+                        </select>
+                    </div>
+                    <div class="flex-1">
+                        <label for="language-select" class="form-label block text-sm font-medium mb-1">Select Language:</label>
+                        <select id="language-select" class="input-field w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#0CCDA3] transition duration-300">
+                            <option value="English">🇬🇧 English</option>
+                            <option value="Hindi">🇮🇳 Hindi</option>
+                            <option value="Kannada">🇮🇳 Kannada</option>
+                            <option value="Telugu">�🇳 Telugu</option>
+                            <option value="Tamil">🇮🇳 Tamil</option>
+                            <option value="Malayalam">🇮🇳 Malayalam</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Voice Selection Dropdown -->
+                <div>
+                    <label for="voice-select" class="form-label block text-sm font-medium mb-1">Select Voice:</label>
+                    <select id="voice-select" class="input-field w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#0CCDA3] transition duration-300">
+                        <option value="Achird">Achird (Friendly)</option>
+                        <option value="Kore">Kore (Firm)</option>
+                        <option value="Puck">Puck (Upbeat)</option>
+                        <option value="Zephyr">Zephyr (Bright)</option>
+                        <option value="Iapetus">Iapetus (Clear)</option>
+                        <option value="Autonoe">Autonoe (Bright)</option>
+                        <option value="Charon">Charon (Informative)</option>
+                        <option value="Leda">Leda (Youthful)</option>
+                        <option value="Orus">Orus (Firm)</option>
+                        <option value="Aoede">Aoede (Breezy)</option>
+                    </select>
+                </div>
+
+                <!-- Question Input Textarea -->
+                <div>
+                    <label for="question-input" class="form-label block text-sm font-medium mb-1">Enter your question:</label>
+                    <textarea id="question-input" rows="4" class="input-field w-full px-4 py-2 rounded-lg border placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0CCDA3] transition duration-300" placeholder="e.g., 'What is photosynthesis?' or 'Explain the image.'"></textarea>
+                </div>
+
+                <!-- Image Upload Section -->
+                <div class="flex flex-col md:flex-row items-center gap-4">
+                    <div class="flex items-center space-x-2">
+                        <label for="image-input" class="cursor-pointer bg-[#0CCDA3] hover:bg-[#0aab8b] text-[#171D27] font-semibold py-2 px-4 rounded-full transition duration-300 flex items-center glow-green-hover">
+                            <!-- Lucide camera icon from inline SVG -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3.5z"/>
+                                <circle cx="12" cy="13" r="3"/>
+                            </svg>
+                            Upload Image
+                        </label>
+                        <input type="file" id="image-input" accept="image/*" class="hidden">
+                        <button id="clear-image-btn" class="hidden bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-full transition duration-300 glow-red-hover">Clear Image</button>
+                    </div>
+                    <div id="image-preview-container" class="mt-4 md:mt-0 flex-grow flex justify-center">
+                        <img id="image-preview" src="#" alt="Image Preview" class="max-w-full max-h-40 rounded-lg shadow-md hidden">
+                    </div>
+                </div>
+
+                <!-- Get Answer Button -->
+                <button id="get-answer-btn" class="w-full bg-gradient-to-r from-[#0CCDA3] to-[#0aab8b] hover:from-[#0aab8b] hover:to-[#099979] text-[#171D27] font-bold py-3 px-4 rounded-lg shadow-lg transition transform hover:scale-105 duration-300 focus:outline-none focus:ring-2 focus:ring-[#0CCDA3] focus:ring-opacity-50">
+                    Get Answer
+                </button>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="loading-spinner" class="mt-8 flex justify-center hidden">
+                <svg class="animate-spin h-8 w-8 text-[#0CCDA3]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+
+            <!-- Answer Output Section -->
+            <div id="answer-output" class="answer-output mt-8 p-6 rounded-lg relative">
+                <p>Your answer will appear here.</p>
+            </div>
+        </div>
+        
+        <!-- Bottom Ad Placeholder Section -->
+        <div class="ad-placeholder w-full max-w-4xl text-center py-4 rounded-lg mt-6">
+            <p>Advertisement - Bottom Ad</p>
+            <!-- 
+                *** ADMOB AD UNIT PLACEHOLDER ***
+                This is where you would place the ad unit code.
+                Your Ad Unit ID: ca-app-pub-3323385698713093/1093674870
+                
+                When you deploy this app, you would replace this div with a block like this:
+                <ins class="adsbygoogle"
+                    style="display:block"
+                    data-ad-client="ca-app-pub-3323385698713093"
+                    data-ad-slot="1093674870"
+                    data-ad-format="auto"
+                    data-full-width-responsive="true"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+            -->
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full max-w-4xl text-center py-4 text-gray-400 text-sm mt-6">
+        <p>&copy; 2024 Solvixy AI. All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get all necessary UI elements
+            const body = document.body;
+            const splashScreen = document.getElementById('splash-screen');
+            const themeToggle = document.getElementById('theme-toggle');
+            const questionInput = document.getElementById('question-input');
+            const subjectSelect = document.getElementById('subject-select');
+            const languageSelect = document.getElementById('language-select');
+            const voiceSelect = document.getElementById('voice-select');
+            const imageInput = document.getElementById('image-input');
+            const imagePreview = document.getElementById('image-preview');
+            const getAnswerBtn = document.getElementById('get-answer-btn');
+            const answerOutput = document.getElementById('answer-output');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const clearImageBtn = document.getElementById('clear-image-btn');
+            
+            let base64Image = null; // Store base64 image data here
+            let audioContext;        // AudioContext for playing TTS audio
+            let audioSource;         // Current audio source node
+
+            // *** IMPORTANT: REPLACE "YOUR_API_KEY_HERE" WITH YOUR ACTUAL API KEY ***
+            // The API key you provided has been inserted below.
+            const apiKey = "AIzaSyDctcKo07gavQgN9nOhWqBpJQ7IM1HxIlI";
+            
+            // Check if API key is provided, if not, use the local Canvas one.
+            const finalApiKey = apiKey === "YOUR_API_KEY_HERE" ? "" : apiKey;
+
+            const textModelUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${finalApiKey}`;
+            const ttsModelUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${finalApiKey}`;
+
+            /**
+             * Implements exponential backoff for API calls to handle network issues gracefully.
+             * @param {string} url - The API endpoint URL.
+             * @param {object} payload - The request body payload.
+             * @param {object} options - The fetch options.
+             * @param {number} maxRetries - Maximum number of retries.
+             * @param {number} delay - Initial delay in milliseconds.
+             * @returns {Promise<object>} The JSON response from the API.
+             */
+            async function makeApiCallWithRetry(url, payload, options, maxRetries = 5, delay = 1000) {
+                for (let i = 0; i < maxRetries; i++) {
+                    try {
+                        const response = await fetch(url, options);
+                        if (response.ok) {
+                            return await response.json();
+                        } else if (response.status === 403) { // Specific check for 403 Forbidden error
+                            throw new Error('API key is invalid or missing. Please provide a valid API key.');
+                        } else if (response.status === 429) { // Too Many Requests
+                            console.warn(`Retry attempt ${i + 1}: Received 429 status. Retrying in ${delay}ms...`);
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            delay *= 2; // Exponential increase
+                        } else {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                    } catch (error) {
+                        console.error(`API call failed on attempt ${i + 1}:`, error);
+                        if (i === maxRetries - 1) {
+                            throw error; // Re-throw the error after max retries
+                        }
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2; // Exponential increase
+                    }
+                }
+            }
+
+            // Splash Screen Logic
+            setTimeout(() => {
+                splashScreen.classList.add('fade-out');
+            }, 2000); // Wait for 2 seconds before fading out
+
+            // Theme toggle functionality
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                body.classList.add('light');
+            } else {
+                body.classList.remove('light');
+            }
+
+            themeToggle.addEventListener('click', () => {
+                body.classList.toggle('light');
+                if (body.classList.contains('light')) {
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+
+            // Image input and preview
+            imageInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        imagePreview.classList.remove('hidden');
+                        clearImageBtn.classList.remove('hidden');
+                        base64Image = e.target.result.split(',')[1]; // Get base64 string
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    imagePreview.classList.add('hidden');
+                    clearImageBtn.classList.add('hidden');
+                    base64Image = null;
+                }
+            });
+
+            // Clear image button
+            clearImageBtn.addEventListener('click', () => {
+                imageInput.value = '';
+                imagePreview.src = '#';
+                imagePreview.classList.add('hidden');
+                clearImageBtn.classList.add('hidden');
+                base64Image = null;
+            });
+
+            // Handle button clicks with event delegation
+            document.addEventListener('click', async (event) => {
+                const targetId = event.target.closest('button')?.id;
+
+                if (targetId === 'get-answer-btn') {
+                    const promptText = questionInput.value.trim();
+                    const selectedSubject = subjectSelect.value;
+                    const selectedLanguage = languageSelect.value;
+
+                    if (promptText === '' && !base64Image) {
+                        answerOutput.innerHTML = '<p class="text-red-500">Please enter a question or upload an image.</p>';
+                        return;
+                    }
+
+                    // Construct prompt based on subject and language
+                    let fullPrompt = `Answer the following ${selectedSubject} question in ${selectedLanguage}. Be concise and clear.`;
+                    if (selectedSubject === 'Mathematics') {
+                        fullPrompt = `Provide a simple, step-by-step explanation for the following math problem in plain text. Do not use any special characters or LaTeX formatting. The question is:`;
+                    }
+                    fullPrompt += `\nQuestion: ${promptText}`;
+
+                    // UI feedback for loading state
+                    getAnswerBtn.disabled = true;
+                    getAnswerBtn.textContent = 'Thinking...';
+                    loadingSpinner.classList.remove('hidden');
+                    answerOutput.innerHTML = '';
+
+                    try {
+                        let parts = [{ text: fullPrompt }];
+                        if (base64Image) {
+                            parts.push({
+                                inlineData: {
+                                    mimeType: imageInput.files[0].type,
+                                    data: base64Image
+                                }
+                            });
+                        }
+                        
+                        const payload = {
+                            contents: [{ role: "user", parts: parts }]
+                        };
+                        const options = {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        };
+
+                        const result = await makeApiCallWithRetry(textModelUrl, payload, options);
+                        
+                        if (result?.candidates?.[0]?.content?.parts?.[0]?.text) {
+                            const text = result.candidates[0].content.parts[0].text;
+                            answerOutput.innerHTML = `
+                                <pre id="answer-text" class="whitespace-pre-wrap font-sans">${text}</pre>
+                                <div class="flex justify-end mt-4 gap-2">
+                                    <button id="copy-answer-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-full transition duration-300 flex items-center glow-purple-hover">
+                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-2M8 5a2 2 0 012-2h4a2 2 0 012 2m-4 0v2m-4-2H8m4 2v2m0 0a2 2 0 01-2 2H8a2 2 0 01-2-2m2 0h4m-4 0v4m0 0H6a2 2 0 00-2 2v1m12-1v-2m0 0h2a2 2 0 012 2v2m0 0a2 2 0 01-2 2H8a2 2 0 01-2-2m2-2v2m4 2v-2m0 0h2a2 2 0 002-2v-2m0 0h-4M8 10h.01M12 10h.01M16 10h.01"/>
+                                        </svg>
+                                        Copy Answer
+                                    </button>
+                                    <button id="read-answer-btn" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-full transition duration-300 flex items-center glow-green-hover">
+                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.5-10.607a9 9 0 010 12.728m2.5-16.273a13 13 0 010 18.384M8 10h.01M12 10h.01M16 10h.01M7 4h10a3 3 0 013 3v10a3 3 0 01-3 3H7a3 3 0 01-3-3V7a3 3 0 013-3z"></path>
+                                        </svg>
+                                        Read Answer
+                                    </button>
+                                </div>
+                            `;
+                        } else {
+                            answerOutput.innerHTML = '<p class="text-red-500">Sorry, I could not generate an answer. The API response was invalid. Please try again.</p>';
+                        }
+
+                    } catch (error) {
+                        console.error("Text API Call failed:", error);
+                        answerOutput.innerHTML = `<p class="text-red-500">An error occurred. Please check your internet connection and try again. Error: ${error.message}</p>`;
+                    } finally {
+                        getAnswerBtn.disabled = false;
+                        getAnswerBtn.textContent = 'Get Answer';
+                        loadingSpinner.classList.add('hidden');
+                    }
+                } else if (targetId === 'copy-answer-btn') {
+                    const textToCopy = document.getElementById('answer-text')?.textContent || '';
+                    if (textToCopy) {
+                        const tempInput = document.createElement('textarea');
+                        tempInput.value = textToCopy;
+                        document.body.appendChild(tempInput);
+                        tempInput.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(tempInput);
+                        
+                        const copyBtn = document.getElementById('copy-answer-btn');
+                        const originalHtml = copyBtn.innerHTML;
+                        copyBtn.textContent = 'Copied!';
+                        setTimeout(() => {
+                            copyBtn.innerHTML = originalHtml;
+                        }, 2000);
+                    }
+                } else if (targetId === 'read-answer-btn') {
+                    const readAnswerBtn = document.getElementById('read-answer-btn');
+                    const textToSpeak = document.getElementById('answer-text')?.textContent || '';
+                    const selectedVoice = voiceSelect.value;
+                    
+                    if (!textToSpeak) {
+                        answerOutput.innerHTML += '<p class="text-red-500 mt-4">No text to read.</p>';
+                        return;
+                    }
+
+                    // Show loading state and disable button
+                    readAnswerBtn.disabled = true;
+                    const originalHtml = readAnswerBtn.innerHTML;
+                    readAnswerBtn.innerHTML = `
+                        <svg class="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Loading...`;
+
+                    // Stop any previous audio playback
+                    if (audioSource) {
+                        audioSource.stop();
+                        audioSource = null;
+                    }
+                    if (audioContext && audioContext.state === 'running') {
+                        audioContext.close().then(() => audioContext = null);
+                    }
+                    
+                    try {
+                        const payload = {
+                            contents: [{ parts: [{ text: textToSpeak }] }],
+                            generationConfig: {
+                                responseModalities: ["AUDIO"],
+                                speechConfig: {
+                                    voiceConfig: { 
+                                        prebuiltVoiceConfig: { voiceName: selectedVoice }
+                                    }
+                                }
+                            },
+                            model: "gemini-2.5-flash-preview-tts"
+                        };
+                        const options = {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        };
+
+                        const result = await makeApiCallWithRetry(ttsModelUrl, payload, options);
+                        
+                        const part = result?.candidates?.[0]?.content?.parts?.[0];
+                        const audioData = part?.inlineData?.data;
+
+                        if (audioData) {
+                            // Ensure AudioContext is ready
+                            if (!audioContext) {
+                                audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+                            }
+                            
+                            // Decode the base64 PCM data
+                            const pcmData = base64ToByteArray(audioData);
+                            const pcm16Data = new Int16Array(pcmData.buffer);
+
+                            // Create a new AudioBuffer with the correct sample rate
+                            const audioBuffer = audioContext.createBuffer(1, pcm16Data.length, audioContext.sampleRate);
+                            const bufferChannel = audioBuffer.getChannelData(0);
+                            for (let i = 0; i < pcm16Data.length; i++) {
+                                bufferChannel[i] = pcm16Data[i] / 32768; // Normalize to -1.0 to 1.0
+                            }
+
+                            // Create and play the audio source
+                            audioSource = audioContext.createBufferSource();
+                            audioSource.buffer = audioBuffer;
+                            audioSource.connect(audioContext.destination);
+                            audioSource.start();
+
+                            // Reset button state when playback ends
+                            audioSource.onended = () => {
+                                readAnswerBtn.disabled = false;
+                                readAnswerBtn.innerHTML = originalHtml;
+                                audioSource = null;
+                            };
+
+                        } else {
+                            answerOutput.innerHTML += '<p class="text-red-500 mt-4">Could not generate audio from the API response. Please try again with a different voice.</p>';
+                            readAnswerBtn.disabled = false;
+                            readAnswerBtn.innerHTML = originalHtml;
+                        }
+                    } catch (error) {
+                        console.error("TTS API Call failed:", error);
+                        answerOutput.innerHTML += `<p class="text-red-500 mt-4">An error occurred during audio generation. Error: ${error.message}</p>`;
+                        readAnswerBtn.disabled = false;
+                        readAnswerBtn.innerHTML = originalHtml;
+                    }
+                }
+            });
+
+            /**
+             * Converts a base64 string to a Uint8Array.
+             * @param {string} base64 - The base64 string.
+             * @returns {Uint8Array} The byte array.
+             */
+            function base64ToByteArray(base64) {
+                const binaryString = window.atob(base64);
+                const len = binaryString.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                return bytes;
+            }
+        });
+    </script>
+</body>
+</html>
+�
