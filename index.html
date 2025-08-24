@@ -1,0 +1,785 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Solvixy — AI Question Solver (Landing + App)</title>
+  <meta name="description" content="Solvixy — Multi-subject problem solver with image upload, TTS, copy, examples, FAQ, privacy, and modern glassmorphism UI." />
+  <meta property="og:title" content="Solvixy — AI Problem Solver" />
+  <meta property="og:description" content="A multi-subject problem solver that provides step-by-step answers with image upload and TTS." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.solvixy.com" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root{
+      --bg1:#0f1221; --bg2:#0f1628;
+      --glass:rgba(255,255,255,.06); --border:rgba(255,255,255,.12);
+      --text:#ecf0ff; --muted:#b8bdd0;
+      --accent:#0CCDA3; --accent2:#7c5cff; --accent3:#00e0ff;
+      --shadow:0 18px 40px rgba(0,0,0,.45);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:"Plus Jakarta Sans",system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1000px 700px at 10% -10%, rgba(124,92,255,.08) 0%, transparent 60%),
+        radial-gradient(900px 600px at 90% 10%, rgba(0,224,255,.06) 0%, transparent 60%),
+        linear-gradient(160deg,var(--bg1),var(--bg2));
+      -webkit-font-smoothing:antialiased;
+    }
+
+    .aura{position:fixed; inset:-30vmax; z-index:-1; pointer-events:none;
+      background:
+        radial-gradient(closest-side at 30% 40%, rgba(124,92,255,.28), transparent 60%),
+        radial-gradient(closest-side at 70% 60%, rgba(0,224,255,.28), transparent 60%),
+        radial-gradient(closest-side at 50% 80%, rgba(255,85,170,.18), transparent 60%);
+      filter:blur(44px) saturate(120%); animation: float 14s ease-in-out infinite alternate;
+    }
+    @keyframes float{0%{transform:translate3d(-2%,-1%,0)}100%{transform:translate3d(2%,1%,0)}}
+
+    .wrap{max-width:1100px;margin:0 auto;padding:20px}
+    .glass{background:var(--glass); border-radius:var(--radius); border:1px solid var(--border); box-shadow:var(--shadow); backdrop-filter:blur(12px) saturate(120%); -webkit-backdrop-filter:blur(12px) saturate(120%);}
+
+    /* Splash */
+    #splash{position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; background:linear-gradient(180deg, rgba(0,0,0,.6), rgba(0,0,0,.65)); transition:opacity .5s ease, transform .6s ease; animation: splashHide 1.5s ease forwards; animation-delay: 1.4s; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);}
+    .splash-title{font-size:clamp(28px,6vw,48px); color:var(--accent2); font-weight:800;}
+    .splash-sub{color:var(--muted);}
+    @keyframes splashHide {to {opacity:0; transform:translateY(-8px); visibility:hidden;}}
+
+    /* Header */
+    header{position:sticky; top:12px; z-index:60}
+    .nav-inner{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px}
+    .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--text); font-weight:800}
+    .logo{width:40px; height:40px; border-radius:12px; display:grid; place-items:center; border:1.2px solid var(--border); overflow:hidden; position:relative}
+    .logo::before{content:""; position:absolute; inset:-40%; background:conic-gradient(from 0deg, rgba(124,92,255,.8), rgba(0,224,255,.8), rgba(255,85,170,.6)); animation:spin 8s linear infinite}
+    .logo span{position:relative; z-index:1; font-weight:900}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .nav-links{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+
+    .btn{position:relative; border:1.5px solid currentColor; color:var(--text); background:transparent; padding:10px 14px; border-radius:14px; font-weight:700; cursor:pointer; transition:all .2s;
+        backdrop-filter:blur(12px) saturate(120%); -webkit-backdrop-filter:blur(12px) saturate(120%);}
+    .btn:hover{background:rgba(255,255,255,.04); border-color:var(--accent3)}
+    .btn-primary{color:var(--accent3); border-color:rgba(0,224,255,.6)}
+    .btn-primary:hover{border-color:var(--accent3)}
+    .button-effect:hover {
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 0 10px rgba(0, 224, 255, 0.4);
+    }
+    
+    @media(max-width: 600px) {
+      .nav-inner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .brand {
+        margin-bottom: 8px;
+      }
+      .nav-links {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .nav-links .btn {
+        flex: 1;
+        text-align: center;
+      }
+    }
+
+    .form{display:grid; gap:12px; margin-top:8px}
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    .field{flex:1; min-width:200px}
+    label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
+
+    select, textarea, input[type="file"], input[type="email"]{
+      width:100%; padding:11px 36px 11px 12px; border-radius:12px;
+      border:1px solid var(--border); background:var(--glass); color:var(--text);
+      appearance:none; -webkit-appearance:none; -moz-appearance:none;
+      backdrop-filter:blur(12px) saturate(120%); -webkit-backdrop-filter:blur(12px) saturate(120%);
+    }
+    select{background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23b8bdd0" viewBox="0 0 16 16"><path d="M3 5l5 5 5-5z"/></svg>'); background-repeat:no-repeat; background-position:right 12px center; background-size:14px;}
+    select option{background:#0f1628; color:var(--text);}
+    textarea{min-height:120px; resize:vertical}
+
+    .answer{margin-top:12px; padding:14px; border-radius:12px; background:rgba(255,255,255,.03); border:1px solid var(--border); color:var(--text)}
+    .step { margin-bottom: 12px; line-height: 1.6; }
+    .step-title { font-weight: bold; margin-bottom: 4px; }
+
+    /* Hero fix */
+    .hero {padding:28px 24px;}
+    .hero h1 {margin:0 0 8px; font-size:22px; font-weight:700;}
+    .hero p {margin:0; font-size:15px; color:var(--muted);}
+
+    /* Responsive Ad card */
+    .ad-card {padding:20px; margin-top:20px; text-align:center;}
+    .ad-card h3 {margin:0; font-size:16px; color:var(--muted);}
+    .ad-card p {margin:6px 0 0; font-size:13px; color:var(--muted);}
+    @media(max-width:600px){
+      .ad-card{padding:14px;}
+      .ad-card h3{font-size:14px;}
+      .ad-card p{font-size:12px;}
+    }
+
+    /* Camera upload button and preview */
+    .upload-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .upload-label {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:var(--glass);
+      color:var(--text);
+      cursor:pointer;
+      font-size:14px;
+      transition:all .2s;
+    }
+    .upload-label:hover {
+      background:rgba(255,255,255,.05);
+      border-color:rgba(0,224,255,.45);
+      box-shadow: 0 0 12px rgba(0,224,255,.4);
+    }
+    #photo { display:none; }
+    .file-name {
+      margin-top:6px;
+      font-size:13px;
+      color:var(--muted);
+    }
+    #image-preview {
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      display: none; /* Initially hidden */
+    }
+
+    section{margin-top:20px}
+    .examples{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:12px}
+    .example{padding:12px; min-height:120px; display:flex; flex-direction:column; gap:8px; background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:12px}
+    .example h3{margin:0; font-size:15px}
+    .example p{margin:0; font-size:14px; color:var(--muted)}
+    
+    @media(max-width: 768px) {
+        .examples {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .faq{margin-top:12px}
+    .q{padding:12px; border-bottom:1px dashed rgba(255,255,255,.08); cursor:pointer}
+    .q h4{margin:0; font-size:15px}
+    .qa-content{max-height:0; overflow:hidden; transition:max-height .32s ease; color:var(--muted); padding:0 12px}
+    .q.open .qa-content{max-height:200px; padding:8px 12px;}
+
+    .footer{margin:28px 0 12px; padding:14px; display:flex; justify-content:space-between; flex-wrap:wrap; color:var(--muted); font-size:14px}
+    
+    .spinner {
+      display: inline-block;
+      width: 1em;
+      height: 1em;
+      border: 2px solid transparent;
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <div id="splash">
+    <div style="text-align:center">
+      <div class="splash-title">Solvixy</div>
+      <div class="splash-sub">Multi-Subject Problem Solver — Upload, Ask, Listen</div>
+    </div>
+  </div>
+
+  <div class="aura" aria-hidden="true"></div>
+
+  <!-- NAV -->
+  <header class="wrap">
+    <div class="glass nav-inner">
+      <a class="brand" href="#">
+        <div class="logo"><span>SX</span></div>
+        <div style="display:flex; flex-direction:column; line-height:1.2">
+          <span style="font-weight:800; font-size:18px; color:var(--text)">Solvixy</span>
+          <span style="font-size:13px; color:var(--muted)">Multi-Subject Problem Solver</span>
+        </div>
+      </a>
+      <nav class="nav-links">
+        <button class="btn btn-ghost" data-scroll="#examples">Examples</button>
+        <button class="btn btn-ghost" data-scroll="#faq">FAQ</button>
+        <button class="btn btn-primary" data-scroll="#ask">Try</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="wrap">
+    <section class="hero glass">
+      <h1>Powerful Multi-Subject Problem Solver</h1>
+      <p>Type or upload an image, pick subject & language, then get step-by-step answers with TTS and copy.</p>
+    </section>
+
+    <!-- Ad Space Card (Top) -->
+    <section class="glass ad-card">
+      <h3>Ad Space</h3>
+      <p>Place your banner or Google Ad here</p>
+    </section>
+
+    <section id="ask" class="glass" style="padding:16px; margin-top:20px;">
+      <h2>Ask Solvixy</h2>
+      <div class="form">
+        <div class="row">
+          <div class="field">
+            <label for="subject">Subject</label>
+            <select id="subject">
+              <option>General</option>
+              <option>Mathematics</option>
+              <option>Physics</option>
+              <option>Chemistry</option>
+              <option>Biology</option>
+              <option>History</option>
+              <option>Geography</option>
+              <option>English Language</option>
+              <option>Computer Science</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="language">Language</label>
+            <select id="language">
+              <option>English</option>
+              <option>Hindi</option>
+              <option>Kannada</option>
+              <option>Telugu</option>
+              <option>Tamil</option>
+              <option>Malayalam</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Added a new row for the voice selector -->
+        <div class="row">
+          <div class="field">
+            <label for="voice">Voice</label>
+            <select id="voice"></select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="photo">Upload Photo</label><br>
+          <div class="upload-group">
+            <label for="photo" class="upload-label">📷 Choose Image</label>
+            <input type="file" id="photo" accept="image/*">
+            <img id="image-preview" src="" alt="Image Preview">
+          </div>
+          <div class="file-name" id="file-name">No file chosen</div>
+        </div>
+
+        <div class="field">
+          <label for="question">Question</label>
+          <textarea id="question" placeholder="Type your question..."></textarea>
+        </div>
+
+        <button id="get-answer" class="btn btn-primary" style="width:100%; margin-top:8px">Get Answer</button>
+
+        <!-- New buttons for copy, read, and clear -->
+        <div style="display: flex; justify-content: space-between; gap: 8px; margin-top: 8px;">
+          <button id="read-answer" class="btn button-effect" style="flex: 1;">Listen</button>
+          <button id="copy-answer" class="btn button-effect" style="flex: 1;">Copy</button>
+          <button id="clear-form" class="btn button-effect" style="flex: 1;">Clear</button>
+        </div>
+
+        <!-- New div for audio status message -->
+        <div id="audio-status" style="font-size: 14px; text-align: center; color: var(--muted); margin-top: 8px;"></div>
+        
+        <div id="answer" class="answer">Your answer will appear here.</div>
+      </div>
+    </section>
+
+    <!-- Ad Space Card (Bottom) -->
+    <section class="glass ad-card">
+      <h3>Ad Space</h3>
+      <p>Place your banner or Google Ad here</p>
+    </section>
+    
+    <!-- Examples -->
+    <section id="examples">
+      <h2>Examples</h2>
+      <div class="examples">
+        <div class="example"><h3>Math</h3><p>Solve quadratic equations step-by-step.</p></div>
+        <div class="example"><h3>Physics</h3><p>Explain Newton's laws in simple terms.</p></div>
+        <div class="example"><h3>Chemistry</h3><p>Balance chemical reactions easily.</p></div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq">
+      <h2>FAQ</h2>
+      <div class="faq">
+        <div class="q"><h4>Is Solvixy free to use?</h4><div class="qa-content">Yes, it's free for students with optional premium features coming soon.</div></div>
+        <div class="q"><h4>Can it solve image-based problems?</h4><div class="qa-content">Yes, upload an image and Solvixy will process it.</div></div>
+        <div class="q"><h4>Which languages are supported?</h4><div class="qa-content">Currently English and major Indian languages.</div></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <span>© 2025 Solvixy. All rights reserved.</span>
+    <span>Made for students ♥</span>
+  </footer>
+
+  <script>
+    // FAQ open/close
+    document.querySelectorAll('.faq .q').forEach(q => {
+      q.addEventListener('click', () => q.classList.toggle('open'));
+    });
+
+    // Show file name and preview after upload
+    const photoInput = document.getElementById('photo');
+    const fileNameDiv = document.getElementById('file-name');
+    const imagePreview = document.getElementById('image-preview');
+
+    photoInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        fileNameDiv.textContent = file.name;
+        
+        // Show the image preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          imagePreview.src = e.target.result;
+          imagePreview.style.display = 'block'; // Make the image visible
+        };
+        reader.readAsDataURL(file);
+      } else {
+        fileNameDiv.textContent = "No file chosen";
+        imagePreview.src = "";
+        imagePreview.style.display = 'none'; // Hide the image if no file is selected
+      }
+    });
+
+    // AI Answer Fetcher
+    const API_KEY = "";
+    const answerDiv = document.getElementById('answer');
+    const getAnswerBtn = document.getElementById('get-answer');
+    const readAnswerBtn = document.getElementById('read-answer');
+    const copyAnswerBtn = document.getElementById('copy-answer');
+    const clearFormBtn = document.getElementById('clear-form');
+    const audioStatusDiv = document.getElementById('audio-status');
+    let currentAudio = null; // Variable to hold the current audio object
+
+    // Function to convert file to base64 string
+    async function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Function to convert base64 PCM data to a WAV file blob
+    function pcmToWav(pcmData, sampleRate) {
+        const pcm16 = new Int16Array(pcmData);
+        const buffer = new ArrayBuffer(44 + pcm16.length * 2);
+        const view = new DataView(buffer);
+
+        // WAV header
+        writeString(view, 0, 'RIFF');
+        view.setUint32(4, 36 + pcm16.length * 2, true);
+        writeString(view, 8, 'WAVE');
+        writeString(view, 12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true); // PCM format
+        view.setUint16(22, 1, true); // Mono channel
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true); // Block align
+        view.setUint16(34, 16, true); // Bits per sample
+        writeString(view, 36, 'data');
+        view.setUint32(40, pcm16.length * 2, true);
+
+        // Write PCM data
+        for (let i = 0; i < pcm16.length; i++) {
+            view.setInt16(44 + i * 2, pcm16[i], true);
+        }
+
+        return new Blob([view], { type: 'audio/wav' });
+
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+    }
+
+    // Function to populate the voice list based on selected language
+    function populateVoiceList() {
+      const voiceSelect = document.getElementById('voice');
+      const languageSelect = document.getElementById('language');
+      const selectedLanguage = languageSelect.value;
+      
+      // Voice options are limited to the ones supported by the TTS model for each language.
+      const voicesByLanguage = {
+        "English": [
+          { name: "Kore", description: "Firm" },
+          { name: "Puck", description: "Upbeat" },
+          { name: "Zephyr", description: "Bright" },
+          { name: "Iapetus", description: "Clear" },
+          { name: "Autonoe", description: "Bright" },
+          { name: "Charon", description: "Informative" },
+          { name: "Leda", description: "Youthful" },
+          { name: "Orus", description: "Firm" },
+          { name: "Aoede", description: "Breezy" },
+          { name: "Umbriel", description: "Easy-going" }
+        ],
+        "Hindi": [
+          { name: "Zephyr", description: "Bright" },
+          { name: "Achird", description: "Friendly" },
+          { name: "Vindemiatrix", description: "Gentle" },
+          { name: "Sadachbia", description: "Lively" },
+          { name: "Sadaltager", description: "Knowledgeable" }
+        ],
+        "Kannada": [
+          { name: "Zubenelgenubi", description: "Casual" }
+        ],
+        "Telugu": [
+          { name: "Vindemiatrix", description: "Gentle" },
+          { name: "Sadachbia", description: "Lively" }
+        ],
+        "Tamil": [
+          { name: "Achird", description: "Friendly" }
+        ],
+        "Malayalam": [
+          { name: "Sadachbia", description: "Lively" }
+        ]
+      };
+
+      // Clear existing options
+      voiceSelect.innerHTML = '';
+
+      // Get the list of voices for the selected language or default to English
+      const voices = voicesByLanguage[selectedLanguage] || voicesByLanguage["English"];
+
+      // Add each defined voice as an option
+      voices.forEach(voice => {
+        const option = document.createElement('option');
+        option.textContent = `${voice.name} (${voice.description})`;
+        option.value = voice.name;
+        voiceSelect.appendChild(option);
+      });
+    }
+
+    // Initial population of the voice list
+    populateVoiceList();
+
+    // Event listener to update the voice list when the language changes
+    document.getElementById('language').addEventListener('change', populateVoiceList);
+
+    // Helper function for exponential backoff and retry
+    async function fetchWithRetry(url, options, retries = 5, delay = 2000) {
+      try {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+          console.error(`Fetch error: ${response.status} ${response.statusText}`);
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response;
+      } catch (error) {
+        if (retries > 0) {
+          console.log(`Fetch failed, retrying in ${delay}ms...`);
+          audioStatusDiv.innerHTML = `⚠️ Network issue, retrying... (${retries} left)<span class='spinner'></span>`;
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return fetchWithRetry(url, options, retries - 1, delay * 2);
+        } else {
+          throw error;
+        }
+      }
+    }
+    
+    // AI Answer Fetcher
+    getAnswerBtn.addEventListener('click', async () => {
+        const subject = document.getElementById('subject').value;
+        const language = document.getElementById('language').value;
+        const questionElement = document.getElementById('question');
+        const question = questionElement?.value ?? '';
+        const file = photoInput.files[0];
+
+        // 1. Validate Input
+        if (!question.trim() && !file) {
+            answerDiv.innerHTML = "Please type a question or upload an image.";
+            return;
+        }
+
+        // 2. Set UI to "loading" state
+        answerDiv.innerHTML = "⏳ Solving...";
+        getAnswerBtn.disabled = true;
+
+        try {
+            // 3. Determine if the user wants a step-by-step answer
+            const isStepByStep = question.toLowerCase().includes("step by step") || 
+                                 question.toLowerCase().includes("in steps") ||
+                                 question.toLowerCase().includes("how to");
+
+            let promptText;
+            let payload;
+
+            if (isStepByStep) {
+                // Step-by-step mode: Request a JSON response
+                promptText = `**Instruction:** You are Solvixy, an expert AI problem solver. Your top priority is to provide a correct, accurate, and high-quality solution. The user wants a detailed, step-by-step answer. Your response must be in a structured JSON format. Provide an explanation, a list of steps, and a final answer. Ensure each step is a separate item in the 'steps' array.
+
+Subject: ${subject}
+Language: ${language}
+Question: ${question.trim()}`;
+
+                payload = {
+                    contents: [{
+                        role: "user",
+                        parts: [{ text: promptText }]
+                    }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                "explanation": { "type": "STRING" },
+                                "steps": {
+                                    "type": "ARRAY",
+                                    "items": { "type": "STRING" }
+                                },
+                                "finalAnswer": { "type": "STRING" }
+                            },
+                            "propertyOrdering": ["explanation", "steps", "finalAnswer"]
+                        }
+                    }
+                };
+
+            } else {
+                // Direct answer mode: Request a text response
+                promptText = `**Instruction:** You are Solvixy, an expert AI problem solver. Your top priority is to provide a correct, accurate, and high-quality solution. The user wants a direct and concise answer. Do not use step-by-step formatting unless explicitly requested.
+
+Subject: ${subject}
+Language: ${language}
+Question: ${question.trim()}`;
+
+                payload = {
+                    contents: [{
+                        role: "user",
+                        parts: [{ text: promptText }]
+                    }]
+                };
+            }
+
+            // Add image data if a file was uploaded
+            if (file) {
+                const base64 = await fileToBase64(file);
+                payload.contents[0].parts.push({ inlineData: { mimeType: file.type, data: base64 } });
+            }
+
+            // 6. Make the API call with retry logic
+            const response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            
+            // 7. Check for a valid response and render the answer
+            if (data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+                const rawAnswer = data.candidates[0].content.parts[0].text;
+                
+                if (isStepByStep) {
+                    try {
+                        const parsedAnswer = JSON.parse(rawAnswer);
+                        let formattedHtml = `<p><b>Explanation:</b> ${parsedAnswer.explanation}</p>`;
+                        
+                        // Dynamically build the step-by-step list from the JSON array
+                        if (parsedAnswer.steps && parsedAnswer.steps.length > 0) {
+                            parsedAnswer.steps.forEach((step, index) => {
+                                formattedHtml += `<div class="step"><div class="step-title">Step ${index + 1}:</div><div class="step-content">${step}</div></div>`;
+                            });
+                        }
+                        
+                        formattedHtml += `<p><b>Final Answer:</b> ${parsedAnswer.finalAnswer}</p>`;
+                        
+                        answerDiv.innerHTML = formattedHtml;
+
+                    } catch (jsonErr) {
+                        console.error("Failed to parse JSON response:", jsonErr);
+                        // Fallback to displaying the raw text if JSON parsing fails
+                        answerDiv.innerHTML = `⚠️ The AI's response was not in a perfect step-by-step format, but here is the answer: <br><br> ${rawAnswer}`;
+                    }
+                } else {
+                    // Show a direct, single-paragraph answer
+                    answerDiv.innerHTML = rawAnswer;
+                }
+
+            } else {
+                answerDiv.innerHTML = "⚠️ No answer received. The AI may not have been able to generate a response. Please try again with a different question or subject.";
+                console.log("API response data was not in the expected format:", data);
+            }
+        } catch (err) {
+            console.error("API call failed:", err);
+            answerDiv.innerHTML = "❌ An unexpected error occurred. Please check your internet connection and try again. Error: " + err.message;
+        } finally {
+            // 8. Reset UI state
+            getAnswerBtn.disabled = false;
+        }
+    });
+
+    // Event listener for the "Listen" button (Voice Reader)
+    readAnswerBtn.addEventListener('click', async () => {
+      // First, stop any existing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
+
+      const answerText = answerDiv.textContent;
+      const selectedVoiceName = document.getElementById('voice').value;
+      const language = document.getElementById('language').value;
+      
+      // Defensively check that answerText is a valid string before proceeding
+      if (!answerText || answerText.trim() === "" || answerText === "⏳ Solving..." || answerText.startsWith("⚠️") || answerText.startsWith("❌")) {
+        audioStatusDiv.textContent = "Please generate a valid answer first.";
+        return;
+      }
+      
+      try {
+        readAnswerBtn.disabled = true;
+        audioStatusDiv.innerHTML = "⏳ Generating audio...<span class='spinner'></span>";
+        console.log("Starting TTS generation for text:", answerText.substring(0, 50) + "...");
+
+        const payload = {
+            contents: [{
+                parts: [{ text: `Generate a TTS of the following text in ${language}. Use a natural and clear tone.\n\n${answerText}` }]
+            }],
+            generationConfig: {
+                responseModalities: ["AUDIO"],
+                speechConfig: {
+                    voiceConfig: {
+                        prebuiltVoiceConfig: { voiceName: selectedVoiceName }
+                    }
+                }
+            },
+            model: "gemini-2.5-flash-preview-tts"
+        };
+        
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${API_KEY}`;
+        
+        const response = await fetchWithRetry(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        audioStatusDiv.innerHTML = "✅ Audio received. Processing for playback...<span class='spinner'></span>";
+        
+        const result = await response.json();
+        console.log("TTS API raw response received. Checking for audio data...");
+        
+        const audioPart = result?.candidates?.[0]?.content?.parts?.[0];
+        const audioData = audioPart?.inlineData?.data;
+        const mimeType = audioPart?.inlineData?.mimeType;
+
+        if (audioData && mimeType && mimeType.startsWith("audio/")) {
+            console.log("Audio data found. Decoding and playing...");
+            const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+            const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000;
+            const pcmData = Uint8Array.from(atob(audioData), c => c.charCodeAt(0)).buffer;
+            const wavBlob = pcmToWav(pcmData, sampleRate);
+            const audioUrl = URL.createObjectURL(wavBlob);
+            const audio = new Audio(audioUrl);
+            currentAudio = audio; // Store the audio object
+            
+            audioStatusDiv.innerHTML = "🔊 Playing audio...<span class='spinner'></span>";
+            audio.play();
+            console.log("Audio URL created and playing.");
+
+            audio.onended = () => {
+                URL.revokeObjectURL(audioUrl);
+                audioStatusDiv.textContent = "✅ Audio finished playing.";
+                currentAudio = null; // Clear the reference
+                console.log("Audio playback finished.");
+            };
+        } else {
+            console.error('TTS response was not a valid audio format. Full response:', result);
+            audioStatusDiv.textContent = "❌ Error: Could not generate audio. The AI might not support this language/voice.";
+        }
+      } catch (err) {
+        console.error("Error with TTS:", err);
+        audioStatusDiv.textContent = "❌ An unexpected error occurred with TTS: " + err.message;
+      } finally {
+        readAnswerBtn.disabled = false;
+      }
+    });
+
+    // Event listener for the "Copy" button
+    copyAnswerBtn.addEventListener('click', () => {
+      // Create a temporary textarea element to hold the text
+      const tempTextarea = document.createElement('textarea');
+      tempTextarea.value = answerDiv.textContent;
+      
+      // Append it to the body (it needs to be in the DOM to be selected)
+      document.body.appendChild(tempTextarea);
+      
+      // Select the text inside the textarea
+      tempTextarea.select();
+      
+      try {
+        // Execute the copy command
+        document.execCommand('copy');
+        
+        // Provide user feedback
+        const originalText = copyAnswerBtn.textContent;
+        copyAnswerBtn.textContent = "Copied!";
+        setTimeout(() => {
+          copyAnswerBtn.textContent = originalText;
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy text: ', err);
+        const originalText = copyAnswerBtn.textContent;
+        copyAnswerBtn.textContent = "Failed!";
+        setTimeout(() => {
+          copyAnswerBtn.textContent = originalText;
+        }, 2000);
+      } finally {
+        // Remove the temporary textarea from the DOM
+        document.body.removeChild(tempTextarea);
+      }
+    });
+
+    // Event listener for the "Clear" button
+    clearFormBtn.addEventListener('click', () => {
+      // Stop the audio if it's currently playing
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
+
+      document.getElementById('question').value = '';
+      document.getElementById('photo').value = '';
+      document.getElementById('file-name').textContent = "No file chosen";
+      imagePreview.src = "";
+      imagePreview.style.display = 'none'; // Corrected variable name
+      answerDiv.innerHTML = "Your answer will appear here.";
+      audioStatusDiv.textContent = "";
+    });
+  </script>
+</body>
+</html>
